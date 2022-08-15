@@ -2,36 +2,59 @@ library(tidyr)
 library(plotly)
 library(dplyr)
 library(psych)
-library(purrr)
 library(MASS)
 library(car)
 library(mctest)
+library(lubridate)
+library(moonBook)
+Sys.setenv("R_REMOTES_NO_ERRORS_FROM_WARNINGS" = "true")
 
-
-data = read.csv(
-  "C:/Users/Ana/Desktop/Data471/ProjectData471/proceedings.csv",
+# Load de directory and data
+setwd("C:/Users/Ana/Desktop/Data471/ProjectData471/")
+getwd()
+dataAES = read.csv(
+  "AES_Data.csv",
   head = T,
   fileEncoding = "UTF-8",
   sep = ";"
 )
-data = data %>% filter(Age.Group.5Yr.Band == "15 - 19 years inclusive")
-data = data %>% dplyr::select(-c(Table.1, Age.Group, X..Variance, Months.Ago, Number.of.Records,Age.Group.5Yr.Band))
-data$ANZSOC.Division = as.factor(data$ANZSOC.Division)
-data$Method.of.Proceeding = as.factor(data$Method.of.Proceeding)
-data$Mop.Subdivision = as.factor(data$Mop.Subdivision)
-data$ANZSOC.Group = as.factor(data$ANZSOC.Group)
-data$ANZSOC.Subdivision = as.factor(data$ANZSOC.Subdivision)
-data$Previous.Period = as.factor(data$Previous.Period)
-data$Ethnic.Group = as.factor(data$Ethnic.Group)
-data$Ethnicity = as.factor(data$Ethnicity)
-data$Mop.Division = as.factor(data$Mop.Division)
-data$Mop.Group = as.factor(data$Mop.Group)
-data$Person.Organisation = as.factor(data$Person.Organisation)
-data$Police.Area = as.factor(data$Police.Area)
-data$Police.District = as.factor(data$Police.District)
-data$Police.District = as.factor(data$Police.District)
-summary(data)
-plot_ly(data, labels = ~Police.District, type = 'pie')
+# Filter data by age
+dataAES = dataAES %>% filter(Age.Group.5Yr.Band == "15 - 19 years inclusive")
 
-table(data$Ethnicity, data$ANZSOC.Group)
-hist(data$Police.District)
+#Set categorical variables as factors
+dataAES$ANZSOC.Division = as.factor(dataAES$ANZSOC.Division)
+dataAES$ANZSOC.Group = as.factor(dataAES$ANZSOC.Group)
+dataAES$ANZSOC.Subdivision = as.factor(dataAES$ANZSOC.Subdivision)
+data$Mop.Subdivision = as.factor(data$Mop.Subdivision)
+dataAES$Ethnic.Group = as.factor(dataAES$Ethnic.Group)
+dataAES$Ethnicity = as.factor(dataAES$Ethnicity)
+dataAES$Mop.Division = as.factor(dataAES$Mop.Division)
+dataAES$Person.Organisation = as.factor(dataAES$Person.Organisation)
+dataAES$PROCEEDINGS_FREQUENCY = as.factor(dataAES$PROCEEDINGS_FREQUENCY)
+dataAES$SEX = as.factor(dataAES$SEX)
+dataAES$Year.Month = as.Date(dataAES$Year.Month, format = "%d/%m/%Y")
+
+# Data summary
+summary(dataAES)
+
+# Number of crimes per year
+crimesYear = as.data.frame(table(dataAES$Year.Month))
+
+# Draw a time series, number of crimes per date
+ggplot(crimesYear, aes(x=as.Date(Var1), y=Freq)) +
+  geom_line(color = "#00AFBB", size = 1) + 
+  xlab("Date")+ylab("Number of crimes")+scale_x_date(date_labels = "%d%b/%Y",date_breaks = "5 months")+theme(axis.text.x=element_text(angle=90, hjust=1)) 
+
+#Pie Chart Crimes rate per Gender
+dataAES %>% group_by(SEX,ANZSOC.Division) %>% summarise(n=n()) %>% mutate(freq =round(n/sum(n),3) ) %>% ggplot(aes(x = "", y = freq, fill = ANZSOC.Division)) +
+  geom_col(color = "black") +
+  geom_text(aes(x = 1.6,label = scales::percent(freq, accuracy = .1)), position = position_stack(vjust = .5),size = 2) +
+  coord_polar(theta = "y") +
+  theme_void()+facet_wrap(~SEX)+theme(legend.text=element_text(size=5),legend.key.size = unit(0.3, 'cm'),legend.title = element_text(size=7)) 
+
+#Contingency Table of ethnicity and gender
+cont = table(dataAES$Ethnicity,dataAES$SEX)
+
+
+
+
