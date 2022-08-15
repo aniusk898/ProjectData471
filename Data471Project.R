@@ -9,7 +9,7 @@ library(mctest)
 
 
 data = read.csv(
-  "C:/Users/Ana/Downloads/proceedings.csv",
+  "C:/Users/Ana/Desktop/Data471/ProjectData471/proceedings.csv",
   head = T,
   fileEncoding = "UTF-8",
   sep = ";"
